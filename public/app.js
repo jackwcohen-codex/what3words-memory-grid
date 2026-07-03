@@ -65,6 +65,8 @@ const els = {
   start: document.querySelector("#start-button"),
   next: document.querySelector("#next-button"),
   help: document.querySelector("#help-button"),
+  targetOverlay: document.querySelector("#target-overlay"),
+  targetOverlayAddress: document.querySelector("#target-overlay-address"),
   instructionsModal: document.querySelector("#instructions-modal"),
   closeHelp: document.querySelector("#close-help-button"),
   startPlaying: document.querySelector("#start-playing-button"),
@@ -84,6 +86,16 @@ function setHud(phase, address, message) {
   els.phase.textContent = phase;
   els.address.textContent = address;
   els.message.textContent = message;
+}
+
+function showTargetOverlay(words) {
+  els.targetOverlayAddress.textContent = `///${words}`;
+  els.targetOverlay.hidden = false;
+}
+
+function hideTargetOverlay() {
+  els.targetOverlay.hidden = true;
+  els.targetOverlayAddress.textContent = "";
 }
 
 function sleep(ms) {
@@ -279,8 +291,8 @@ async function showStudySequence(squares) {
 
     setHud(
       `Study ${index + 1} of 3`,
-      `///${square.words}`,
-      "Remember where this square sits on the grid."
+      `Square ${index + 1}`,
+      "Read the address beside the highlighted square on the map."
     );
 
     await sleep(studyPaces[selectedPace].flashMs);
@@ -295,6 +307,7 @@ async function startRound() {
   setDifficultyDisabled(true);
   layers.study.clearLayers();
   layers.result.clearLayers();
+  hideTargetOverlay();
 
   try {
     setHud("Loading", "Preparing map", "Loading the what3words grid.");
@@ -314,12 +327,14 @@ async function startRound() {
     await showStudySequence(roundSquares);
     targetSquare = randomFrom(roundSquares);
     acceptingGuess = true;
+    showTargetOverlay(targetSquare.words);
     setHud(
       "Find this square",
-      `///${targetSquare.words}`,
-      "Click the grid square where you saw this address."
+      "Use the map overlay",
+      "Click the grid square where you saw the address shown on the map."
     );
   } catch (error) {
+    hideTargetOverlay();
     setHud("Problem", "Round failed", error.message);
     els.start.disabled = false;
     setDifficultyDisabled(false);
@@ -334,7 +349,8 @@ async function handleGuess(event) {
   if (!acceptingGuess || !targetSquare) return;
 
   acceptingGuess = false;
-  setHud("Checking", `///${targetSquare.words}`, "Resolving your clicked square.");
+  hideTargetOverlay();
+  setHud("Checking", "Checking click", "Resolving your clicked square.");
 
   try {
     const selected = await lookupAddress(event.latlng);
@@ -362,12 +378,13 @@ async function handleGuess(event) {
     setHud(
       "Result",
       `${score} points`,
-      `${distanceText}. ${multiplierLabel()}. Correct: ///${targetSquare.words}`
+      `${distanceText}. ${multiplierLabel()}.`
     );
     els.next.disabled = false;
     setDifficultyDisabled(false);
   } catch (error) {
-    setHud("Problem", `///${targetSquare.words}`, error.message);
+    showTargetOverlay(targetSquare.words);
+    setHud("Problem", "Try again", error.message);
     acceptingGuess = true;
   }
 }

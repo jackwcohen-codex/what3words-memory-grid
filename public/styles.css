@@ -65,6 +65,46 @@ button:disabled {
   width: 100%;
 }
 
+.target-overlay {
+  background: #df2f4f;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 16px 42px rgba(23, 33, 38, 0.3);
+  color: #ffffff;
+  left: 50%;
+  max-width: min(520px, calc(100% - 32px));
+  padding: 14px 18px 16px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  top: 22px;
+  transform: translateX(-50%);
+  z-index: 900;
+}
+
+.target-overlay[hidden] {
+  display: none;
+}
+
+.target-overlay span {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.target-overlay strong {
+  display: block;
+  font-family: Verdana, "Atkinson Hyperlegible", Arial, sans-serif;
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
 .hud {
   background: var(--panel);
   border-left: 1px solid var(--line);
@@ -491,5 +531,13 @@ p {
 
   #address-display {
     font-size: 23px;
+  }
+
+  .target-overlay {
+    top: 14px;
+  }
+
+  .target-overlay strong {
+    font-size: 22px;
   }
 }

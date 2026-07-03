@@ -16,6 +16,10 @@
     <main class="app-shell">
       <section class="map-wrap" aria-label="Game map">
         <div id="map"></div>
+        <div class="target-overlay" id="target-overlay" hidden>
+          <span>Find this square</span>
+          <strong id="target-overlay-address"></strong>
+        </div>
       </section>
 
       <aside class="hud" aria-live="polite">
@@ -110,8 +114,8 @@
         </div>
         <div class="modal-body">
           <p>Each round starts with three study squares. They flash on the map one at a time.</p>
-          <p>When a square flashes, its what3words address appears next to the square and again in the right-hand panel. Try to remember both the address and where the square was.</p>
-          <p>After the study squares finish, one of those addresses appears again in the right-hand panel. Click the grid square where you think you saw it.</p>
+          <p>When a square flashes, its what3words address appears beside that square on the map. The right-hand panel does not show the address, so keep your eyes on the map.</p>
+          <p>After the study squares finish, one of those addresses appears in a red overlay on the map. Click the grid square where you think you saw that address.</p>
           <p>Your base score depends on how many grid squares away your click is. Exact is 100, 1 square away is 80, 2 away is 60, 3 away is 40, 4 or 5 away is 20, and further away is 0.</p>
           <p>Difficulty changes the size of the map area. Beginner is the smallest and easiest, then Easy, Medium, Hard, and Lethal get larger and harder.</p>
           <p>Difficulty also multiplies your score: Beginner x1, Easy x2, Medium x5, Hard x10, and Lethal x20.</p>
