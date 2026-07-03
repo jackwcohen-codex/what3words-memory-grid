@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: what3words-memory-grid
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: WHAT3WORDS_API_KEY
+        sync: false

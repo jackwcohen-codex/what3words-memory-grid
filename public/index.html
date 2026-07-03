@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>what3words Memory Grid</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQxH8TfF91bK9MJk6wG8OimE8FZC7kE="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="map-wrap" aria-label="Game map">
+        <div id="map"></div>
+      </section>
+
+      <aside class="hud" aria-live="polite">
+        <div class="brand">
+          <span class="brand-mark">///</span>
+          <div>
+            <h1>Memory Grid</h1>
+            <p>Study the highlighted squares, then click the matching one.</p>
+          </div>
+        </div>
+
+        <div class="status-panel">
+          <div class="stat">
+            <span>Round</span>
+            <strong id="round">1</strong>
+          </div>
+          <div class="stat">
+            <span>Total</span>
+            <strong id="total-score">0</strong>
+          </div>
+        </div>
+
+        <div class="prompt">
+          <span id="phase-label">Ready</span>
+          <strong id="address-display">Press start</strong>
+          <p id="message">Three what3words squares will appear one by one.</p>
+        </div>
+
+        <div class="difficulty">
+          <span>Difficulty</span>
+          <div class="difficulty-options" role="group" aria-label="Difficulty">
+            <button class="difficulty-option active" type="button" data-difficulty="easy">
+              Easy
+            </button>
+            <button class="difficulty-option" type="button" data-difficulty="normal">
+              Normal
+            </button>
+            <button class="difficulty-option" type="button" data-difficulty="hard">
+              Hard
+            </button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="start-button" type="button">Start round</button>
+          <button id="next-button" type="button" disabled>Next round</button>
+        </div>
+
+        <div class="legend">
+          <div><span class="swatch study"></span>Study square</div>
+          <div><span class="swatch target"></span>Correct square</div>
+          <div><span class="swatch selected"></span>Your click</div>
+        </div>
+      </aside>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="/scoring.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
