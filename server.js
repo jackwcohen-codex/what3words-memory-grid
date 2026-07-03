@@ -6,6 +6,9 @@ const PORT = Number(process.env.PORT || 5173);
 const API_KEY = process.env.WHAT3WORDS_API_KEY;
 const PUBLIC_DIR = path.join(__dirname, "public");
 const W3W_BASE_URL = "https://api.what3words.com/v3";
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 120;
+const rateLimitBuckets = new Map();
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -15,13 +18,74 @@ const mimeTypes = {
   ".svg": "image/svg+xml",
 };
 
-function sendJson(res, status, body) {
+function sendJson(res, status, body, extraHeaders = {}) {
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
+    ...extraHeaders,
   });
   res.end(JSON.stringify(body));
 }
+
+function getClientIp(req) {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.trim()) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return req.socket.remoteAddress || "unknown";
+}
+
+function checkRateLimit(req) {
+  const now = Date.now();
+  const clientIp = getClientIp(req);
+  const bucket = rateLimitBuckets.get(clientIp);
+
+  if (!bucket || now >= bucket.resetAt) {
+    const resetAt = now + RATE_LIMIT_WINDOW_MS;
+    rateLimitBuckets.set(clientIp, { count: 1, resetAt });
+    return {
+      allowed: true,
+      remaining: RATE_LIMIT_MAX_REQUESTS - 1,
+      resetAt,
+    };
+  }
+
+  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: bucket.resetAt,
+    };
+  }
+
+  bucket.count += 1;
+  return {
+    allowed: true,
+    remaining: RATE_LIMIT_MAX_REQUESTS - bucket.count,
+    resetAt: bucket.resetAt,
+  };
+}
+
+function rateLimitHeaders(rateLimit) {
+  const resetSeconds = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000));
+  return {
+    "ratelimit-limit": String(RATE_LIMIT_MAX_REQUESTS),
+    "ratelimit-remaining": String(rateLimit.remaining),
+    "ratelimit-reset": String(resetSeconds),
+  };
+}
+
+function pruneRateLimitBuckets() {
+  const now = Date.now();
+  for (const [clientIp, bucket] of rateLimitBuckets.entries()) {
+    if (now >= bucket.resetAt) {
+      rateLimitBuckets.delete(clientIp);
+    }
+  }
+}
+
+setInterval(pruneRateLimitBuckets, RATE_LIMIT_WINDOW_MS).unref();
 
 function normalizeBBox(rawBBox) {
   const values = String(rawBBox || "")
@@ -92,6 +156,25 @@ async function callWhat3Words(endpoint, params) {
 
 async function handleApi(req, res, url) {
   try {
+    if (url.pathname === "/api/grid" || url.pathname === "/api/address") {
+      const rateLimit = checkRateLimit(req);
+      const headers = rateLimitHeaders(rateLimit);
+
+      if (!rateLimit.allowed) {
+        sendJson(
+          res,
+          429,
+          { error: "Too many requests. Please wait a moment and try again." },
+          { ...headers, "retry-after": headers["ratelimit-reset"] }
+        );
+        return;
+      }
+
+      res.setHeader("ratelimit-limit", headers["ratelimit-limit"]);
+      res.setHeader("ratelimit-remaining", headers["ratelimit-remaining"]);
+      res.setHeader("ratelimit-reset", headers["ratelimit-reset"]);
+    }
+
     if (url.pathname === "/api/grid") {
       const bbox = normalizeBBox(url.searchParams.get("bbox"));
       const data = await callWhat3Words("grid-section", {
