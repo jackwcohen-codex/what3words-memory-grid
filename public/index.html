@@ -46,7 +46,7 @@
 
         <div class="difficulty">
           <span>Difficulty</span>
-          <div class="difficulty-options" role="group" aria-label="Difficulty">
+          <div class="difficulty-options difficulty-options-large" role="group" aria-label="Difficulty">
             <button class="difficulty-option active" type="button" data-difficulty="beginner">
               Beginner
             </button>
@@ -86,6 +86,16 @@
           <button id="help-button" type="button">How to play</button>
         </div>
 
+        <section class="leaderboard" aria-label="Leaderboard">
+          <div class="panel-heading">
+            <span>Leaderboard</span>
+            <button id="refresh-leaderboard-button" type="button">Refresh</button>
+          </div>
+          <ol id="leaderboard-list">
+            <li class="empty-state">No scores yet</li>
+          </ol>
+        </section>
+
         <div class="legend">
           <div><span class="swatch study"></span>Study square</div>
           <div><span class="swatch target"></span>Correct square</div>
@@ -111,12 +121,44 @@
         <div class="modal-body">
           <p>Three what3words squares will flash on the map, one after another.</p>
           <p>Watch where each square appears and remember the address shown with it.</p>
-          <p>After the flashes, one of those addresses appears again. Click the square where you saw it.</p>
+          <p>After the flashes, one of those addresses appears again in the right-hand panel. Click the square where you saw it.</p>
           <p>Closer guesses score more points. An exact square is worth 100.</p>
           <p>Use Difficulty to change the map area, and Study pace to change how long each square stays visible.</p>
         </div>
         <button id="start-playing-button" type="button">Start playing</button>
       </div>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="nickname-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nickname-title"
+    >
+      <form class="modal" id="nickname-form">
+        <div class="modal-header">
+          <h2 id="nickname-title">Join the leaderboard</h2>
+        </div>
+        <div class="modal-body">
+          <p>Choose a nickname for your score. Keep it friendly.</p>
+          <label class="field-label" for="nickname-input">Nickname</label>
+          <input
+            id="nickname-input"
+            name="nickname"
+            maxlength="18"
+            minlength="2"
+            pattern="[a-zA-Z0-9 _.-]+"
+            required
+            type="text"
+          />
+          <p class="field-error" id="nickname-error"></p>
+        </div>
+        <div class="modal-actions">
+          <button id="save-nickname-button" type="submit">Save score</button>
+          <button id="skip-nickname-button" type="button">Skip</button>
+        </div>
+      </form>
     </div>
 
     <script

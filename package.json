@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/scoring.test.js && node tests/rate-limit.test.js"
+    "test": "node tests/scoring.test.js && node tests/rate-limit.test.js && node tests/leaderboard.test.js"
   },
   "dependencies": {},
   "devDependencies": {}

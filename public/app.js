@@ -17,18 +17,39 @@ const playableAreas = [
 ];
 
 const difficulties = {
-  beginner: { label: "Beginner", zoom: 23 },
-  easy: { label: "Easy", zoom: 22 },
-  medium: { label: "Medium", zoom: 21 },
-  hard: { label: "Hard", zoom: 20 },
-  lethal: { label: "Lethal", zoom: 19 },
+  beginner: { label: "Beginner", scoreMultiplier: 1, zoom: 23 },
+  easy: { label: "Easy", scoreMultiplier: 2, zoom: 22 },
+  medium: { label: "Medium", scoreMultiplier: 5, zoom: 21 },
+  hard: { label: "Hard", scoreMultiplier: 10, zoom: 20 },
+  lethal: { label: "Lethal", scoreMultiplier: 20, zoom: 19 },
 };
 
 const studyPaces = {
-  relaxed: { label: "Relaxed", flashMs: 3000 },
-  normal: { label: "Normal", flashMs: 2200 },
-  quick: { label: "Quick", flashMs: 1500 },
+  relaxed: { label: "Relaxed", flashMs: 3000, scoreMultiplier: 1 },
+  normal: { label: "Normal", flashMs: 2200, scoreMultiplier: 3 },
+  quick: { label: "Quick", flashMs: 1500, scoreMultiplier: 5 },
 };
+
+const bannedNicknameParts = [
+  "arse",
+  "asshole",
+  "bastard",
+  "bitch",
+  "bollock",
+  "bollocks",
+  "cunt",
+  "dick",
+  "fuck",
+  "fuk",
+  "motherfucker",
+  "nazi",
+  "prick",
+  "pussy",
+  "shit",
+  "slut",
+  "twat",
+  "wank",
+];
 
 const map = L.map("map", {
   zoomControl: false,
@@ -58,9 +79,16 @@ const els = {
   start: document.querySelector("#start-button"),
   next: document.querySelector("#next-button"),
   help: document.querySelector("#help-button"),
+  leaderboardList: document.querySelector("#leaderboard-list"),
+  refreshLeaderboard: document.querySelector("#refresh-leaderboard-button"),
   instructionsModal: document.querySelector("#instructions-modal"),
   closeHelp: document.querySelector("#close-help-button"),
   startPlaying: document.querySelector("#start-playing-button"),
+  nicknameModal: document.querySelector("#nickname-modal"),
+  nicknameForm: document.querySelector("#nickname-form"),
+  nicknameInput: document.querySelector("#nickname-input"),
+  nicknameError: document.querySelector("#nickname-error"),
+  skipNickname: document.querySelector("#skip-nickname-button"),
   difficultyOptions: document.querySelectorAll(".difficulty-option"),
   paceOptions: document.querySelectorAll(".pace-option"),
 };
@@ -72,6 +100,8 @@ let targetSquare = null;
 let acceptingGuess = false;
 let selectedDifficulty = "beginner";
 let selectedPace = "relaxed";
+let playerNickname = localStorage.getItem("memoryGridNickname") || "";
+let pendingScore = null;
 
 function setHud(phase, address, message) {
   els.phase.textContent = phase;
@@ -196,6 +226,102 @@ function hideInstructions(nextFocus = els.help) {
   nextFocus.focus();
 }
 
+function validateNickname(rawNickname) {
+  const nickname = String(rawNickname || "").trim().replace(/\s+/g, " ");
+
+  if (nickname.length < 2 || nickname.length > 18) {
+    throw new Error("Nickname must be 2 to 18 characters.");
+  }
+
+  if (!/^[a-zA-Z0-9 _.-]+$/.test(nickname)) {
+    throw new Error("Use letters, numbers, spaces, dots, dashes, or underscores.");
+  }
+
+  const compact = nickname.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (bannedNicknameParts.some((part) => compact.includes(part))) {
+    throw new Error("Please choose a different nickname.");
+  }
+
+  return nickname;
+}
+
+function calculateRoundScore(distance) {
+  const baseScore = window.MemoryGridScoring.scoreForGridDistance(distance);
+  const difficultyMultiplier = difficulties[selectedDifficulty].scoreMultiplier;
+  const paceMultiplier = studyPaces[selectedPace].scoreMultiplier;
+  return baseScore * difficultyMultiplier * paceMultiplier;
+}
+
+function multiplierLabel() {
+  const difficultyMultiplier = difficulties[selectedDifficulty].scoreMultiplier;
+  const paceMultiplier = studyPaces[selectedPace].scoreMultiplier;
+  return `${difficultyMultiplier}x difficulty, ${paceMultiplier}x pace`;
+}
+
+function renderLeaderboard(entries) {
+  if (!entries.length) {
+    els.leaderboardList.innerHTML = '<li class="empty-state">No scores yet</li>';
+    return;
+  }
+
+  els.leaderboardList.innerHTML = entries
+    .map(
+      (entry) => `
+        <li>
+          <span>${entry.rank}. ${entry.nickname}</span>
+          <strong>${entry.score}</strong>
+        </li>
+      `
+    )
+    .join("");
+}
+
+async function loadLeaderboard() {
+  try {
+    const data = await getJson("/api/leaderboard");
+    renderLeaderboard(data.entries || []);
+  } catch {
+    els.leaderboardList.innerHTML = '<li class="empty-state">Leaderboard unavailable</li>';
+  }
+}
+
+function showNicknamePrompt(score) {
+  pendingScore = score;
+  els.nicknameError.textContent = "";
+  els.nicknameInput.value = playerNickname;
+  els.nicknameModal.classList.add("visible");
+  els.nicknameInput.focus();
+}
+
+function hideNicknamePrompt() {
+  els.nicknameModal.classList.remove("visible");
+  els.next.focus();
+}
+
+async function submitLeaderboardScore(score) {
+  if (!playerNickname) {
+    showNicknamePrompt(score);
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/leaderboard", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ nickname: playerNickname, score }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || "Could not save leaderboard score");
+    }
+    renderLeaderboard(data.entries || []);
+  } catch (error) {
+    els.message.textContent = `${els.message.textContent} Leaderboard: ${error.message}`;
+  }
+}
+
 async function getJson(url) {
   const response = await fetch(url);
   const body = await response.json().catch(() => ({}));
@@ -316,7 +442,7 @@ async function handleGuess(event) {
   try {
     const selected = await lookupAddress(event.latlng);
     const distance = window.MemoryGridScoring.gridDistance(targetSquare.square, selected.square);
-    const score = window.MemoryGridScoring.scoreForGridDistance(distance);
+    const score = calculateRoundScore(distance);
     totalScore += score;
     els.totalScore.textContent = String(totalScore);
 
@@ -336,9 +462,14 @@ async function handleGuess(event) {
     }).addTo(layers.result);
 
     const distanceText = distance === 0 ? "Exact match" : formatDistance(distance);
-    setHud("Result", `${score} points`, `${distanceText}. Correct: ///${targetSquare.words}`);
+    setHud(
+      "Result",
+      `${score} points`,
+      `${distanceText}. ${multiplierLabel()}. Correct: ///${targetSquare.words}`
+    );
     els.next.disabled = false;
     setDifficultyDisabled(false);
+    await submitLeaderboardScore(totalScore);
   } catch (error) {
     setHud("Problem", `///${targetSquare.words}`, error.message);
     acceptingGuess = true;
@@ -360,9 +491,28 @@ els.difficultyOptions.forEach((button) => {
 els.paceOptions.forEach((button) => {
   button.addEventListener("click", () => setStudyPace(button.dataset.pace));
 });
+els.refreshLeaderboard.addEventListener("click", loadLeaderboard);
 els.help.addEventListener("click", showInstructions);
 els.closeHelp.addEventListener("click", hideInstructions);
 els.startPlaying.addEventListener("click", () => hideInstructions(els.start));
+els.nicknameForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  els.nicknameError.textContent = "";
+
+  try {
+    playerNickname = validateNickname(els.nicknameInput.value);
+    localStorage.setItem("memoryGridNickname", playerNickname);
+    hideNicknamePrompt();
+    await submitLeaderboardScore(pendingScore);
+    pendingScore = null;
+  } catch (error) {
+    els.nicknameError.textContent = error.message;
+  }
+});
+els.skipNickname.addEventListener("click", () => {
+  pendingScore = null;
+  hideNicknamePrompt();
+});
 els.instructionsModal.addEventListener("click", (event) => {
   if (event.target === els.instructionsModal) {
     hideInstructions();
@@ -376,4 +526,5 @@ document.addEventListener("keydown", (event) => {
 els.start.addEventListener("click", startRound);
 els.next.addEventListener("click", nextRound);
 map.on("click", handleGuess);
+loadLeaderboard();
 showInstructions();
