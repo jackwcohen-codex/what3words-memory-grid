@@ -17,6 +17,7 @@ const playableAreas = [
 ];
 
 const difficulties = {
+  beginner: { label: "Beginner", zoom: 23 },
   easy: { label: "Easy", zoom: 22 },
   medium: { label: "Medium", zoom: 21 },
   hard: { label: "Hard", zoom: 20 },
@@ -32,12 +33,12 @@ const studyPaces = {
 const map = L.map("map", {
   zoomControl: false,
   minZoom: 18,
-  maxZoom: 22,
+  maxZoom: 23,
 });
 
 L.control.zoom({ position: "bottomleft" }).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 22,
+  maxZoom: 23,
   maxNativeZoom: 19,
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
@@ -56,6 +57,10 @@ const els = {
   message: document.querySelector("#message"),
   start: document.querySelector("#start-button"),
   next: document.querySelector("#next-button"),
+  help: document.querySelector("#help-button"),
+  instructionsModal: document.querySelector("#instructions-modal"),
+  closeHelp: document.querySelector("#close-help-button"),
+  startPlaying: document.querySelector("#start-playing-button"),
   difficultyOptions: document.querySelectorAll(".difficulty-option"),
   paceOptions: document.querySelectorAll(".pace-option"),
 };
@@ -65,7 +70,7 @@ let totalScore = 0;
 let roundSquares = [];
 let targetSquare = null;
 let acceptingGuess = false;
-let selectedDifficulty = "easy";
+let selectedDifficulty = "beginner";
 let selectedPace = "relaxed";
 
 function setHud(phase, address, message) {
@@ -179,6 +184,16 @@ function setStudyPace(pace) {
 function showRandomStartingArea() {
   const area = randomFrom(playableAreas);
   map.setView([area.lat, area.lng], difficulties[selectedDifficulty].zoom, { animate: false });
+}
+
+function showInstructions() {
+  els.instructionsModal.classList.add("visible");
+  els.startPlaying.focus();
+}
+
+function hideInstructions(nextFocus = els.help) {
+  els.instructionsModal.classList.remove("visible");
+  nextFocus.focus();
 }
 
 async function getJson(url) {
@@ -336,7 +351,7 @@ function nextRound() {
   startRound();
 }
 
-setDifficulty("easy");
+setDifficulty("beginner");
 setStudyPace("relaxed");
 showRandomStartingArea();
 els.difficultyOptions.forEach((button) => {
@@ -345,6 +360,20 @@ els.difficultyOptions.forEach((button) => {
 els.paceOptions.forEach((button) => {
   button.addEventListener("click", () => setStudyPace(button.dataset.pace));
 });
+els.help.addEventListener("click", showInstructions);
+els.closeHelp.addEventListener("click", hideInstructions);
+els.startPlaying.addEventListener("click", () => hideInstructions(els.start));
+els.instructionsModal.addEventListener("click", (event) => {
+  if (event.target === els.instructionsModal) {
+    hideInstructions();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && els.instructionsModal.classList.contains("visible")) {
+    hideInstructions();
+  }
+});
 els.start.addEventListener("click", startRound);
 els.next.addEventListener("click", nextRound);
 map.on("click", handleGuess);
+showInstructions();
