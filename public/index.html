@@ -86,16 +86,6 @@
           <button id="help-button" type="button">How to play</button>
         </div>
 
-        <section class="leaderboard" aria-label="Leaderboard">
-          <div class="panel-heading">
-            <span>Leaderboard</span>
-            <button id="refresh-leaderboard-button" type="button">Refresh</button>
-          </div>
-          <ol id="leaderboard-list">
-            <li class="empty-state">No scores yet</li>
-          </ol>
-        </section>
-
         <div class="legend">
           <div><span class="swatch study"></span>Study square</div>
           <div><span class="swatch target"></span>Correct square</div>
@@ -119,47 +109,17 @@
           </button>
         </div>
         <div class="modal-body">
-          <p>Three what3words squares will flash on the map, one after another.</p>
-          <p>Watch where each square appears and remember the address shown with it.</p>
-          <p>After the flashes, one of those addresses appears again in the right-hand panel. Click the square where you saw it.</p>
-          <p>Closer guesses score more points. On Beginner difficulty with Relaxed pace, an exact square is worth 100.</p>
-          <p>Higher difficulty levels and faster study pace multiply that score, so exact matches can be worth much more.</p>
-          <p>Use Difficulty to change the map area, and Study pace to change how long each square stays visible.</p>
+          <p>Each round starts with three study squares. They flash on the map one at a time.</p>
+          <p>When a square flashes, its what3words address appears next to the square and again in the right-hand panel. Try to remember both the address and where the square was.</p>
+          <p>After the study squares finish, one of those addresses appears again in the right-hand panel. Click the grid square where you think you saw it.</p>
+          <p>Your base score depends on how many grid squares away your click is. Exact is 100, 1 square away is 80, 2 away is 60, 3 away is 40, 4 or 5 away is 20, and further away is 0.</p>
+          <p>Difficulty changes the size of the map area. Beginner is the smallest and easiest, then Easy, Medium, Hard, and Lethal get larger and harder.</p>
+          <p>Difficulty also multiplies your score: Beginner x1, Easy x2, Medium x5, Hard x10, and Lethal x20.</p>
+          <p>Study pace changes how long each square stays visible. Relaxed is slowest, Normal is faster, and Quick is fastest.</p>
+          <p>Study pace also multiplies your score: Relaxed x1, Normal x3, and Quick x5. So an exact match is 100 points on Beginner and Relaxed, but much more on harder and faster settings.</p>
         </div>
         <button id="start-playing-button" type="button">Start playing</button>
       </div>
-    </div>
-
-    <div
-      class="modal-backdrop"
-      id="nickname-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="nickname-title"
-    >
-      <form class="modal" id="nickname-form">
-        <div class="modal-header">
-          <h2 id="nickname-title">Join the leaderboard</h2>
-        </div>
-        <div class="modal-body">
-          <p>Choose a nickname for your score. Keep it friendly.</p>
-          <label class="field-label" for="nickname-input">Nickname</label>
-          <input
-            id="nickname-input"
-            name="nickname"
-            maxlength="18"
-            minlength="2"
-            pattern="[a-zA-Z0-9 _.-]+"
-            required
-            type="text"
-          />
-          <p class="field-error" id="nickname-error"></p>
-        </div>
-        <div class="modal-actions">
-          <button id="save-nickname-button" type="submit">Save score</button>
-          <button id="skip-nickname-button" type="button">Skip</button>
-        </div>
-      </form>
     </div>
 
     <script

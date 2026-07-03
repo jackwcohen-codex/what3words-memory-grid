@@ -5,31 +5,10 @@ const fs = require("fs/promises");
 const PORT = Number(process.env.PORT || 5173);
 const API_KEY = process.env.WHAT3WORDS_API_KEY;
 const PUBLIC_DIR = path.join(__dirname, "public");
-const LEADERBOARD_FILE = process.env.LEADERBOARD_FILE || path.join(__dirname, "data", "leaderboard.json");
 const W3W_BASE_URL = "https://api.what3words.com/v3";
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 120;
 const rateLimitBuckets = new Map();
-const bannedNicknameParts = [
-  "arse",
-  "asshole",
-  "bastard",
-  "bitch",
-  "bollock",
-  "bollocks",
-  "cunt",
-  "dick",
-  "fuck",
-  "fuk",
-  "motherfucker",
-  "nazi",
-  "prick",
-  "pussy",
-  "shit",
-  "slut",
-  "twat",
-  "wank",
-];
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -108,124 +87,6 @@ function pruneRateLimitBuckets() {
 
 setInterval(pruneRateLimitBuckets, RATE_LIMIT_WINDOW_MS).unref();
 
-function parseRequestBody(req, maxBytes = 10_000) {
-  return new Promise((resolve, reject) => {
-    let body = "";
-
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > maxBytes) {
-        reject(new Error("Request body is too large"));
-        req.destroy();
-      }
-    });
-
-    req.on("end", () => {
-      if (!body) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(new Error("Request body must be valid JSON"));
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
-
-function normalizeNickname(rawNickname) {
-  const nickname = String(rawNickname || "").trim().replace(/\s+/g, " ");
-
-  if (nickname.length < 2 || nickname.length > 18) {
-    throw new Error("Nickname must be 2 to 18 characters");
-  }
-
-  if (!/^[a-zA-Z0-9 _.-]+$/.test(nickname)) {
-    throw new Error("Nickname can only use letters, numbers, spaces, dots, dashes, and underscores");
-  }
-
-  const compact = nickname.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (bannedNicknameParts.some((part) => compact.includes(part))) {
-    throw new Error("Please choose a different nickname");
-  }
-
-  return nickname;
-}
-
-function normalizeScore(rawScore) {
-  const score = Number(rawScore);
-
-  if (!Number.isInteger(score) || score < 0 || score > 1_000_000) {
-    throw new Error("Score must be a whole number between 0 and 1000000");
-  }
-
-  return score;
-}
-
-async function readLeaderboard() {
-  try {
-    const raw = await fs.readFile(LEADERBOARD_FILE, "utf8");
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed.entries) ? parsed.entries : [];
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writeLeaderboard(entries) {
-  await fs.mkdir(path.dirname(LEADERBOARD_FILE), { recursive: true });
-  await fs.writeFile(
-    LEADERBOARD_FILE,
-    `${JSON.stringify({ entries }, null, 2)}\n`,
-    "utf8"
-  );
-}
-
-function rankLeaderboard(entries) {
-  return [...entries]
-    .sort((a, b) => b.score - a.score || a.nickname.localeCompare(b.nickname))
-    .slice(0, 10)
-    .map((entry, index) => ({ ...entry, rank: index + 1 }));
-}
-
-async function handleLeaderboard(req, res) {
-  if (req.method === "GET") {
-    const entries = rankLeaderboard(await readLeaderboard());
-    sendJson(res, 200, { entries });
-    return;
-  }
-
-  if (req.method !== "POST") {
-    sendJson(res, 405, { error: "Method not allowed" }, { allow: "GET, POST" });
-    return;
-  }
-
-  const body = await parseRequestBody(req);
-  const nickname = normalizeNickname(body.nickname);
-  const score = normalizeScore(body.score);
-  const now = new Date().toISOString();
-  const entries = await readLeaderboard();
-  const existing = entries.find((entry) => entry.nickname.toLowerCase() === nickname.toLowerCase());
-
-  if (existing) {
-    existing.nickname = nickname;
-    existing.score = Math.max(existing.score, score);
-    existing.updatedAt = now;
-  } else {
-    entries.push({ nickname, score, updatedAt: now });
-  }
-
-  await writeLeaderboard(rankLeaderboard(entries));
-  sendJson(res, 200, { entries: rankLeaderboard(entries) });
-}
-
 function normalizeBBox(rawBBox) {
   const values = String(rawBBox || "")
     .split(",")
@@ -295,7 +156,7 @@ async function callWhat3Words(endpoint, params) {
 
 async function handleApi(req, res, url) {
   try {
-    if (url.pathname === "/api/grid" || url.pathname === "/api/address" || url.pathname === "/api/leaderboard") {
+    if (url.pathname === "/api/grid" || url.pathname === "/api/address") {
       const rateLimit = checkRateLimit(req);
       const headers = rateLimitHeaders(rateLimit);
 
@@ -312,11 +173,6 @@ async function handleApi(req, res, url) {
       res.setHeader("ratelimit-limit", headers["ratelimit-limit"]);
       res.setHeader("ratelimit-remaining", headers["ratelimit-remaining"]);
       res.setHeader("ratelimit-reset", headers["ratelimit-reset"]);
-    }
-
-    if (url.pathname === "/api/leaderboard") {
-      await handleLeaderboard(req, res);
-      return;
     }
 
     if (url.pathname === "/api/grid") {

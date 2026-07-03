@@ -1,5 +1,4 @@
 node_modules/
-data/leaderboard.json
 .env
 .env.*
 !.env.example

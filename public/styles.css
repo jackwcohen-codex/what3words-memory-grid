@@ -46,7 +46,7 @@ button:disabled {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 430px;
+  grid-template-columns: minmax(0, 1fr) 480px;
   height: 100vh;
   min-height: 620px;
 }
@@ -235,72 +235,6 @@ p {
   background: #ffffff;
   border: 1px solid var(--line);
   color: var(--ink);
-}
-
-.leaderboard {
-  border-top: 1px solid var(--line);
-  display: grid;
-  gap: 12px;
-  padding-top: 18px;
-}
-
-.panel-heading {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.panel-heading span {
-  color: var(--muted);
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-#refresh-leaderboard-button {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font-size: 12px;
-  min-height: 30px;
-  padding: 0 10px;
-}
-
-#leaderboard-list {
-  display: grid;
-  gap: 6px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-#leaderboard-list li {
-  align-items: center;
-  background: #f7f9fa;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  min-height: 36px;
-  padding: 8px 10px;
-}
-
-#leaderboard-list span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#leaderboard-list strong {
-  flex: 0 0 auto;
-}
-
-#leaderboard-list .empty-state {
-  color: var(--muted);
-  justify-content: center;
 }
 
 .legend {
@@ -493,7 +427,9 @@ p {
   box-shadow: 0 22px 70px rgba(23, 33, 38, 0.34);
   display: grid;
   gap: 18px;
+  max-height: calc(100vh - 40px);
   max-width: 520px;
+  overflow-y: auto;
   padding: 24px;
   width: min(100%, 520px);
 }
@@ -531,52 +467,6 @@ p {
 }
 
 .modal-body p {
-  color: var(--ink);
-}
-
-.field-label {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-#nickname-input {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--ink);
-  font: inherit;
-  font-size: 20px;
-  min-height: 48px;
-  padding: 10px 12px;
-}
-
-.field-error {
-  color: var(--accent-dark);
-  font-weight: 700;
-  min-height: 20px;
-}
-
-.modal-actions {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 1fr;
-}
-
-#save-nickname-button,
-#skip-nickname-button {
-  min-height: 48px;
-}
-
-#save-nickname-button {
-  background: var(--accent);
-  color: #ffffff;
-}
-
-#skip-nickname-button {
-  background: #ffffff;
-  border: 1px solid var(--line);
   color: var(--ink);
 }
 
