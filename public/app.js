@@ -22,6 +22,12 @@ const difficulties = {
   hard: { label: "Hard", zoom: 19 },
 };
 
+const studyPaces = {
+  relaxed: { label: "Relaxed", flashMs: 3000 },
+  normal: { label: "Normal", flashMs: 2200 },
+  quick: { label: "Quick", flashMs: 1500 },
+};
+
 const map = L.map("map", {
   zoomControl: false,
   minZoom: 18,
@@ -50,6 +56,7 @@ const els = {
   start: document.querySelector("#start-button"),
   next: document.querySelector("#next-button"),
   difficultyOptions: document.querySelectorAll(".difficulty-option"),
+  paceOptions: document.querySelectorAll(".pace-option"),
 };
 
 let round = 1;
@@ -58,6 +65,7 @@ let roundSquares = [];
 let targetSquare = null;
 let acceptingGuess = false;
 let selectedDifficulty = "easy";
+let selectedPace = "relaxed";
 
 function setHud(phase, address, message) {
   els.phase.textContent = phase;
@@ -151,6 +159,20 @@ function setDifficultyDisabled(disabled) {
   els.difficultyOptions.forEach((button) => {
     button.disabled = disabled;
   });
+  els.paceOptions.forEach((button) => {
+    button.disabled = disabled;
+  });
+}
+
+function setStudyPace(pace) {
+  if (!studyPaces[pace] || acceptingGuess) return;
+
+  selectedPace = pace;
+  els.paceOptions.forEach((button) => {
+    const isActive = button.dataset.pace === pace;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
 }
 
 function showRandomStartingArea() {
@@ -222,7 +244,7 @@ async function showStudySequence(squares) {
       "Remember where this square sits on the grid."
     );
 
-    await sleep(1700);
+    await sleep(studyPaces[selectedPace].flashMs);
   }
   layers.study.clearLayers();
 }
@@ -243,7 +265,12 @@ async function startRound() {
     map.invalidateSize();
     await sleep(150);
     await loadGrid();
-    setHud("Loading", "Choosing squares", `${difficulty.label} round ${round} is in ${area.name}.`);
+    const pace = studyPaces[selectedPace];
+    setHud(
+      "Loading",
+      "Choosing squares",
+      `${difficulty.label} round ${round} is in ${area.name}. Study pace: ${pace.label}.`
+    );
     roundSquares = await pickRoundSquares();
     await showStudySequence(roundSquares);
     targetSquare = randomFrom(roundSquares);
@@ -309,9 +336,13 @@ function nextRound() {
 }
 
 setDifficulty("easy");
+setStudyPace("relaxed");
 showRandomStartingArea();
 els.difficultyOptions.forEach((button) => {
   button.addEventListener("click", () => setDifficulty(button.dataset.difficulty));
+});
+els.paceOptions.forEach((button) => {
+  button.addEventListener("click", () => setStudyPace(button.dataset.pace));
 });
 els.start.addEventListener("click", startRound);
 els.next.addEventListener("click", nextRound);

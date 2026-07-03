@@ -72,6 +72,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  overflow-y: auto;
   padding: 24px;
   z-index: 600;
 }
@@ -179,13 +180,15 @@ p {
   padding: 3px;
 }
 
-.difficulty-option {
+.difficulty-option,
+.pace-option {
   background: transparent;
   color: var(--muted);
   min-height: 38px;
 }
 
-.difficulty-option.active {
+.difficulty-option.active,
+.pace-option.active {
   background: #ffffff;
   box-shadow: 0 2px 10px rgba(23, 33, 38, 0.12);
   color: var(--accent-dark);
