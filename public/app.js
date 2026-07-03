@@ -17,9 +17,10 @@ const playableAreas = [
 ];
 
 const difficulties = {
-  easy: { label: "Easy", zoom: 21 },
-  normal: { label: "Normal", zoom: 20 },
-  hard: { label: "Hard", zoom: 19 },
+  easy: { label: "Easy", zoom: 22 },
+  medium: { label: "Medium", zoom: 21 },
+  hard: { label: "Hard", zoom: 20 },
+  lethal: { label: "Lethal", zoom: 19 },
 };
 
 const studyPaces = {
@@ -31,12 +32,12 @@ const studyPaces = {
 const map = L.map("map", {
   zoomControl: false,
   minZoom: 18,
-  maxZoom: 21,
+  maxZoom: 22,
 });
 
 L.control.zoom({ position: "bottomleft" }).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 21,
+  maxZoom: 22,
   maxNativeZoom: 19,
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
